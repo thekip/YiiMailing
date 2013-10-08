@@ -157,12 +157,15 @@ You can configure this extension like an usual Yii component.
 Transports is used for delivering mailes. Here we have a few transports.
 
 #### SMTP Transport.
-This transport is used for sending mailes via SMTP server. Basicly is sends via local smtp server that's why it doesn't support authentification, but it's easy to implement in future.
+This transport is used for sending mailes via SMTP server. By default it used local smtp server.
 
 | Property      | Type 		| Default  | Description   |
 | ----- | ---- |---- |--- |
 | server     | string | 127.0.0.1 | SMTP Server host name or ip adress.
 | serverPort | int | 25 | Server port
+| authenticate | bool | false | Using authenticating or not. Authenticatitng is new feature, it isn't tested yet!
+| username | string | null | auth username
+| password | string | null | auth password
 **Example:**
 ```php
         'transport' => array (
