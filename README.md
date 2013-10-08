@@ -144,7 +144,7 @@ $mailer->send();
 ```
 
 ## Configuring
-You can configure this extension like usual Yii component.
+You can configure this extension like an usual Yii component.
 
 **Mailing class** has 2 important options: 
 
@@ -154,56 +154,112 @@ You can configure this extension like usual Yii component.
 | emailDefaults | array() | This is email class definition array. Here you can inject other class for Letters, or set defaults. For example default sender, view, layout or subject.
 
 ###Transports
-Here we have a few transports. Transports is used for delivering mailes.
+Transports is used for delivering mailes. Here we have a few transports.
 
 #### SMTP Transport.
-This transport is used for sending mailes via SMTP server. Basicly is sends via local smtp server that's  it doesn't support authentification, but it's easy to implement.
+This transport is used for sending mailes via SMTP server. Basicly is sends via local smtp server that's why it doesn't support authentification, but it's easy to implement in future.
 
 | Property      | Type 		| Default  | Description   |
 | ----- | ---- |---- |--- |
 | server     | string | 127.0.0.1 | SMTP Server host name or ip adress.
 | serverPort | int | 25 | Server port
-
 **Example:**
 ```php
         'transport' => array (
-            'class' => 'SmtpTransport', //DebugTransport, PhpTransport, SmtpTransport
+            'class' => 'SmtpTransport',
             'server' => '192.168.1.1',
             'serverPort' => '101'
-        )
-
-//or use you own transport
-        'transport' => array (
-            'class' => 'MyTransport',
-            'property' => 'value',
         )
 ```
 
 #### PHP Transport.
-This transport is used for sending mailes via PHP mail() function. Strictly not recomended to use this transport for batch mailing in unix system.
+This transport is used for sending mailes via PHP mail() function. Strictly not recomended to use this transport for batch mailing in unix systems.
 It doesn't have any special options.
-
-| Property      | Type 		| Default  | Description   |
-| ----- | ---- |---- |--- |
-| server     | string | 127.0.0.1 | SMTP Server host name or ip adress.
-| serverPort | int | 25 | Server port
-
 **Example:**
 ```php
         'transport' => array (
-            'class' => 'SmtpTransport', //DebugTransport, PhpTransport, SmtpTransport
-            'server' => '192.168.1.1',
-            'serverPort' => '101'
+            'class' => 'PhpTransport', 
         )
+```
 
-//or use you own transport
+#### Debug Transport.
+This transport is used for debugging purposes. It doesn't delivery emailes instead, it stored them in the `Yii::app()->user->setFlash()`. 
+It works together with DebugWidget, which extracts and shows debug messages from `Yii::app()->user->getFlash()`.
+**Example:**
+```php
         'transport' => array (
-            'class' => 'MyTransport',
-            'property' => 'value',
+            'class' => 'DebugTransport', 
         )
 ```
 ## Debugging
-...
+As described above you have to set Debug transport, and also put debug widget somewhere in the page. And it will be work.
+**Example:**
+```php
+      //config/main.php
+        'transport' => array (
+            'class' => 'DebugTransport', 
+        )
+        
+     //in the bottom of views/layouts/main.php
+     $this->createWidget('ext.Mailing.DebugWidget');
+```
 
 ## Extending
-...
+YiiMailing can be extended by writting you own transport, email message classes or extending Mailing component. 
+You just need to inject new classes in the config. 
+
+**Example:**
+```php
+ 'components' => array(
+  ...
+    'mail' => array(
+        'class' => 'MyMailer', //extended from ext.Mailing.Mailer class
+        'emailDefaults' => array(
+          'class' =>  'MyEmailLetter' //extended from EmailLetter class
+        ),
+        'transport' => array(
+            'class' => 'MyTransport' //implement IMailerTransport interface
+        )
+    ),
+  ...
+    )
+```
+
+### Writing own Transport
+If you want write you own transport, you have to extend it from `IMailerTransport` interface and implement methods from this interface. 
+For example you can write queued mailing system:
+
+```php
+class QueuedTransport implements IMailerTransport {
+ 
+    public function init() {}
+    
+    /**
+     * 
+     * @param string $from Sender email (only email!)
+     * @param string $recipient recipient Email (only email!)
+     * @param string $headers prepared headers
+     * @param string $body letter body
+     */
+    public function send($from, $recipient, $headers, $body) {
+      //save message in the DB queue
+       $queue = new Queue();
+       $queue->from = $from;
+       $queue->recipient = $recipient;
+       $queue->headers = $headers;
+       $queue->body = $body;
+       
+       $queue->type = Queue::EMAIL_MESSAGE;
+       $queue->createDate = 'NOW()';
+       $queue->save();
+    }
+}
+
+//Some example code wich called from crontab
+$queue = Queue::model()->findAllByAttributes(array('type' => Queue::EMAIL_MESSAGE));
+foreach ($queue as $task) {
+   //processing each task 
+}
+
+```
+
