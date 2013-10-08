@@ -18,6 +18,17 @@ class SmtpTransport implements IMailerTransport{
     public $serverPort = 25;
     
     /**
+     * Enable authenticate ? 
+     * @var type 
+     */
+    public $authenticate = false;
+    
+    public $username = '';
+    
+    public $password = '';
+    
+    
+    /**
      *
      * @var SmtpClient 
      */
@@ -25,6 +36,10 @@ class SmtpTransport implements IMailerTransport{
     
     public function init() {
         $this->smtp = new SmtpClient($this->server, $this->serverPort);
+        
+        if ($this->authenticate) {
+            $this->smtp->authenticate($this->username, $this->password);
+        }
     }
     
     /**
@@ -62,10 +77,30 @@ class SmtpClient {
         $response = $this->socket->read();
          
          if ($this->parseCode($response) != 220) {
-             throw new Exception("Не удалось подключиться к SMTP серверу через сокет. Сервер ответил: $response");
+             throw new Exception("Unable connect to SMTP server. Server response: $response");
          };
          
          $this->sendHelo();
+    }
+    
+    /**
+     * 
+     * @throws Exception
+     */
+    public function authenticate($username, $password)
+    {
+        $response = '';
+        
+        if($this->execCommand("AUTH LOGIN", $response) != self::RESPONSE_CODE_OK)
+            throw new Exception($response);
+
+        $code = $this->execCommand(base64_encode($username));
+        if($code != self::RESPONSE_CODE_OK && $code != 334)
+            throw new Exception($response);
+
+        $code = $this->execCommand(base64_encode($password));
+        if($code != self::RESPONSE_CODE_OK && $code != 334)
+            throw new Exception($response);
     }
     
     protected function sendHelo($name = "") {
@@ -76,7 +111,7 @@ class SmtpClient {
         
         $response = "";
         if ($this->execCommand("HELO $name", $response) != self::RESPONSE_CODE_OK) {
-            throw new Exception("Не удалось выполнить команду HELO, сервер ответил: $response");
+            throw new Exception("Failed to execute HELO command, server response: $response");
         }
     }
     
