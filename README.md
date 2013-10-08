@@ -24,7 +24,7 @@ To start using it, copy **Mailing** folder to **Application.Extension** in you p
         'class' => 'ext.Mailing.Mailer',
         'emailDefaults' => array(
             'sender' => 'Any Sender name <robot@sender.domain>',
-            'layout' => 'ext.Mailing.views.layout', //or any other layout for email letters
+            //'layout' => 'ext.Mailing.views.layout', //this is used by default. You can set any other layout for email letters
         ),
         'transport' => array(
             'class' => 'SmtpTransport' //DebugTransport, PhpTransport, SmtpTransport
@@ -144,8 +144,64 @@ $mailer->send();
 ```
 
 ## Configuring
-...
+You can configure this extension like usual Yii component.
 
+**Mailing class** has 2 important options: 
+
+| Property      | Type 		| Description   |
+| ----- | ---- |--- |
+| transport     | array() | This is transport class definition array. You can set you own transport, or use predefined. Transport is a PHP Class implemented `IMailerTransport` interface. All items from this array will by used for instantiating of a Transport class.
+| emailDefaults | array() | This is email class definition array. Here you can inject other class for Letters, or set defaults. For example default sender, view, layout or subject.
+
+###Transports
+Here we have a few transports. Transports is used for delivering mailes.
+
+#### SMTP Transport.
+This transport is used for sending mailes via SMTP server. Basicly is sends via local smtp server that's  it doesn't support authentification, but it's easy to implement.
+
+| Property      | Type 		| Default  | Description   |
+| ----- | ---- |---- |--- |
+| server     | string | 127.0.0.1 | SMTP Server host name or ip adress.
+| serverPort | int | 25 | Server port
+
+**Example:**
+```php
+        'transport' => array (
+            'class' => 'SmtpTransport', //DebugTransport, PhpTransport, SmtpTransport
+            'server' => '192.168.1.1',
+            'serverPort' => '101'
+        )
+
+//or use you own transport
+        'transport' => array (
+            'class' => 'MyTransport',
+            'property' => 'value',
+        )
+```
+
+#### PHP Transport.
+This transport is used for sending mailes via PHP mail() function. Strictly not recomended to use this transport for batch mailing in unix system.
+It doesn't have any special options.
+
+| Property      | Type 		| Default  | Description   |
+| ----- | ---- |---- |--- |
+| server     | string | 127.0.0.1 | SMTP Server host name or ip adress.
+| serverPort | int | 25 | Server port
+
+**Example:**
+```php
+        'transport' => array (
+            'class' => 'SmtpTransport', //DebugTransport, PhpTransport, SmtpTransport
+            'server' => '192.168.1.1',
+            'serverPort' => '101'
+        )
+
+//or use you own transport
+        'transport' => array (
+            'class' => 'MyTransport',
+            'property' => 'value',
+        )
+```
 ## Debugging
 ...
 
